@@ -9,7 +9,7 @@ using input = GoogleARCore.InstantPreviewInput;
 
 public class hw_ARController : MonoBehaviour
 {
-    // we will fill this list with the planes that arcore detected in the current frame
+    //fill this list with the planes that arcore detected in the current frame
     private List<DetectedPlane> m_NewDetectedPlanes = new List<DetectedPlane>();
 
     public GameObject gridPrefab;
@@ -18,36 +18,39 @@ public class hw_ARController : MonoBehaviour
 
     void Update()
     {
-        // check arcore session status
-        if (Session.Status != SessionStatus.Tracking) 
+        SetTrakableGrid();
+        CheckUserTouchOnScreen();
+    }
+
+    void SetTrakableGrid() {
+
+        if (Session.Status != SessionStatus.Tracking)
             return;
-        
+
         // the following function will fill m_NewDetectedPlanes with the planes that ARCore detected in the current frame
         Session.GetTrackables<DetectedPlane>(m_NewDetectedPlanes, TrackableQueryFilter.New);
 
         // instantiate a Grid for each DetectedPlane in m_NewDetectedPlanes
-        for (int i = 0; i < m_NewDetectedPlanes.Count; ++i) {
+        for (int i = 0; i < m_NewDetectedPlanes.Count; ++i)
+        {
             GameObject grid = Instantiate(gridPrefab, Vector3.zero, Quaternion.identity, transform);
 
             // This function will set the position of grid and modify the verticles of the attached mesh
-            grid.GetComponent<hw_GridVisualiser>().Initialize(m_NewDetectedPlanes[i]);
+            grid.GetComponent<hw_GridVisualiser>().Initialize(m_NewDetectedPlanes[i]);    
         }
+    }
 
-        // check if the user touches the screen
+    void CheckUserTouchOnScreen() {
+
         Touch touch;
-        if (Input.touchCount < 1 || (touch = Input.GetTouch(0)).phase != TouchPhase.Began) 
+        if (Input.touchCount < 1 || (touch = Input.GetTouch(0)).phase != TouchPhase.Began)
             return;
 
-        // let's now check if the user touched any of the tracked planes
         TrackableHit hit;
 
-        if (Frame.Raycast(touch.position.x, touch.position.y, TrackableHitFlags.PlaneWithinPolygon, out hit)) {
-            // let's now place the portal the portal on top of the tracked plane that we touched
-
-            // enable the portal
+        if (Frame.Raycast(touch.position.x, touch.position.y, TrackableHitFlags.PlaneWithinPolygon, out hit))
+        {
             portal.SetActive(true);
-
-            // create a new anchor
             Anchor anchor = hit.Trackable.CreateAnchor(hit.Pose);
 
             // set the position of the portal to be the same as the hit position
@@ -66,5 +69,9 @@ public class hw_ARController : MonoBehaviour
             // arcore will keep understanding the world and update the anchors accordingly hence we need to attach our portal to the anchor
             portal.transform.parent = anchor.transform;
         }
+
     }
+
+
+
 }
